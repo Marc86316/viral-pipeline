@@ -1,7 +1,10 @@
 # viral-pipeline
-An automated pipeline for downloading YouTube Shorts/videos, extracting subtitles and top comments, translating titles/subtitles, and preparing content for social media reposting.
 
-## License
+An automated pipeline for downloading YouTube videos/Shorts, extracting and translating subtitles, fetching top comments, embedding NLP matching, and assembling final content for social media reposting.
 
-This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License**.  
-See the [LICENSE](./LICENSE) file for details.
+## Quickstart
+
+```bash
+cd /Users/chenzhende/Documents/GitHub/viral-pipeline
+pip install -r requirements.txt
+python core/pipeline.py <YouTube_URL>

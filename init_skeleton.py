@@ -1,3 +1,4 @@
+OVERWRITE = True  # Set to False if you want to preserve existing files
 from pathlib import Path
 
 # Base directory for your project
@@ -47,15 +48,100 @@ def get_deepl_usage() -> dict:
     """Query DeepL usage and return statistics."""
     pass
 ''',
-    # ...（此處省略其餘檔案清單，同 init 腳本中完整內容）
+    "core/nlp_embeddings.py": '''"""
+Embed comments into vector representations.
+"""
+def embed_comments(texts):
+    """Return embedding array for list of comment texts."""
+    pass
+''',
+    "core/subtitle_embedding.py": '''"""
+Parse and embed subtitle segments.
+"""
+def parse_vtt(vtt_path: str):
+    """Return list of (timestamp, text) from VTT file."""
+    pass
+
+def embed_subtitles(segments):
+    """Return embedding array for subtitle text segments."""
+    pass
+''',
+    "core/comment_pairing.py": '''"""
+Match subtitle embeddings to comment embeddings.
+"""
+def pair_comments(sub_emb, comm_emb, threshold=0.7):
+    """
+    Return list of {timestamp, comment, score} for comment insertion.
+    """
+    pass
+''',
+    "core/blender_embed.py": '''"""
+Use Blender Python API to overlay comments in video.
+"""
+def insert_comments_in_video(video_path: str, comment_schedule, output_path: str):
+    """Insert comment overlays into video using Blender scripting."""
+    pass
+''',
+    "core/pipeline.py": '''"""
+Orchestrate the end-to-end MVP pipeline.
+"""
+def run_mvp(video_url: str, config_path: str = "config/settings.yaml"):
+    """Execute full pipeline: download, subtitle, embedding, pairing, rendering."""
+    pass
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Run viral-pipeline MVP")
+    parser.add_argument("url", help="YouTube video or Short URL")
+    parser.add_argument("--config", default="config/settings.yaml", help="Path to settings file")
+    args = parser.parse_args()
+    run_mvp(args.url, args.config)
+''',
+    "config/settings.yaml": '''# API keys and other configuration
+yt_api_key: YOUR_YOUTUBE_API_KEY_HERE
+deepl_api_key: YOUR_DEEPL_API_KEY_HERE
+''',
+    "utils/logger.py": '''"""
+Logging configuration for viral-pipeline.
+"""
+import logging
+
+def setup_logger(name=__name__):
+    """Create and return a logger."""
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        handler.setFormatter(fmt)
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    return logger
+''',
+    "requirements.txt": '''yt-dlp
+requests
+google-api-python-client
+deepl
+''',
+    "README.md": '''# viral-pipeline
+
+An automated pipeline for downloading YouTube videos/Shorts, extracting and translating subtitles, fetching top comments, embedding NLP matching, and assembling final content for social media reposting.
+
+## Quickstart
+
+```bash
+cd /Users/chenzhende/Documents/GitHub/viral-pipeline
+pip install -r requirements.txt
+python core/pipeline.py <YouTube_URL>
+'''
 }
+
 
 # Create files with content
 for rel_path, content in files.items():
     file_path = base_dir / rel_path
-    if not file_path.exists():
+    if OVERWRITE or not file_path.exists():
         file_path.write_text(content, encoding="utf-8")
-        print(f"Created: {file_path}")
+        print(f"{'Overwritten' if file_path.exists() else 'Created'}: {file_path}")
     else:
         print(f"Skipped (exists): {file_path}")
 

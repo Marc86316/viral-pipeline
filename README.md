@@ -6,6 +6,7 @@ An automated pipeline for downloading YouTube Shorts/videos, extracting subtitle
 This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International License**.  
 See the [LICENSE](./LICENSE) file for details.
 
+```text
 viral-pipeline/
 ├── core/
 │   ├── video_downloader.py         # download video & extract title
@@ -23,6 +24,7 @@ viral-pipeline/
 │   └── embeddings/                 # serialized vectors
 └── utils/
     └── logger.py                   # logging setup
+```
 
 ### Output Parameters
 

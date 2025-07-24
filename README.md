@@ -41,7 +41,7 @@ The following outputs are returned from `video_downloader.py` functions:
 Example return from `download_and_rename_video()`:
 ```python
 {
-    "original_title": "原始標題（可能為非英文）",
+    "original_title": "Original title (might not be english)",
     "translated_title": "English Title",
     "final_filename": "English_Title.mp4"
 }

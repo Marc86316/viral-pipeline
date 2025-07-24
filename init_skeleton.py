@@ -1,4 +1,4 @@
-OVERWRITE = True  # Set to False if you want to preserve existing files
+OVERWRITE = False  # Set to False if you want to preserve existing files
 from pathlib import Path
 
 # Base directory for your project

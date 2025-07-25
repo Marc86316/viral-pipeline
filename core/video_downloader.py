@@ -28,7 +28,7 @@ def get_video_title(url: str) -> str:
         return info['title']
 
 def sanitize_filename(text: str) -> str:
-    text = re.sub(r"[^\w\s\u4e00-\u9fff-]", "", text)  # 保留中英文、數字
+    text = re.sub(r"[^\w\s\u4e00-\u9fff-]", "", text)  # keep En, Ch
     return text.strip().replace(" ", "_")
 
 def translate_to_english(text: str, deepl_api_key: str) -> str:
@@ -57,7 +57,7 @@ def download_and_rename_video(video_url: str, deepl_api_key: str):
 
     info_path = Path(f"{video_id}.info.json")
     if not info_path.exists():
-        raise FileNotFoundError("找不到 info.json，下載階段可能失敗")
+        raise FileNotFoundError("can't find file info.json, process might be failed")
 
     with open(info_path, encoding="utf-8") as f:
         info = json.load(f)

@@ -9,8 +9,7 @@ dirs = [
     "core",
     "config",
     "utils",
-    "data/subtitles",
-    "data/comments",
+    "data",  # Only create the base data folder; per-video folders will be created dynamically
     "output",
     "templates",
     "assets"
@@ -126,12 +125,23 @@ deepl
 
 An automated pipeline for downloading YouTube videos/Shorts, extracting and translating subtitles, fetching top comments, embedding NLP matching, and assembling final content for social media reposting.
 
-## Quickstart
+## Folder Structure
 
-```bash
-cd /Users/chenzhende/Documents/GitHub/viral-pipeline
-pip install -r requirements.txt
-python core/pipeline.py <YouTube_URL>
+```
+viral-pipeline/
+├── core/                     # Source code
+├── config/                   # API keys and settings
+├── utils/                    # Logger or utility functions
+├── data/                     # Contains subfolders per video title
+│   └── {video_title}/        # Folder per video
+│       ├── video.mp4         # Downloaded video
+│       ├── subtitles_zh.vtt  # Translated subtitles
+│       └── comments.json     # Extracted top comments
+├── output/                   # Final rendered video (optional)
+├── templates/                # Text or overlay templates
+└── assets/                   # Static images/fonts for rendering
+
+## Quickstart
 '''
 }
 

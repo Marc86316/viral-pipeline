@@ -1,4 +1,3 @@
-
 """
 Download YouTube videos and fetch metadata.
 """
@@ -8,6 +7,8 @@ import json
 import requests
 import re
 from pathlib import Path
+import os
+import shutil
 
 def download_video(url: str) -> str:
     """Download video and return filepath."""
@@ -66,14 +67,24 @@ def download_and_rename_video(video_url: str, deepl_api_key: str):
     translated_title = translate_to_english(original_title, deepl_api_key)
     safe_title = sanitize_filename(translated_title)
 
+    # Create target directory under data/
+    target_dir = Path("data") / safe_title
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    # Move video file
     mp4_path = Path(f"{video_id}.mp4")
     if mp4_path.exists():
-        mp4_path.rename(f"{safe_title}.mp4")
+        final_video_path = target_dir / f"{safe_title}.mp4"
+        mp4_path.rename(final_video_path)
+
+    # Move info JSON
     if info_path.exists():
-        info_path.rename(f"{safe_title}.info.json")
+        final_info_path = target_dir / f"{safe_title}.info.json"
+        info_path.rename(final_info_path)
 
     return {
         "original_title": original_title,
         "translated_title": translated_title,
-        "final_filename": f"{safe_title}.mp4"
+        "final_filename": str(final_video_path),
+        "target_directory": str(target_dir)
     }

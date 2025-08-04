@@ -9,6 +9,7 @@ import re
 from pathlib import Path
 import os
 import shutil
+import glob
 
 def download_video(url: str) -> str:
     """Download video and return filepath."""
@@ -81,6 +82,13 @@ def download_and_rename_video(video_url: str, deepl_api_key: str):
     if info_path.exists():
         final_info_path = target_dir / f"{safe_title}.info.json"
         info_path.rename(final_info_path)
+
+    # Cleanup yt-dlp temporary files
+    for tmp in glob.glob(f"{video_id}*.part") + glob.glob(f"{video_id}*.ytdl"):
+        try:
+            Path(tmp).unlink()
+        except OSError:
+            pass
 
     return {
         "original_title": original_title,

@@ -1,4 +1,3 @@
-import os
 import requests
 import yt_dlp
 import csv
@@ -19,6 +18,16 @@ def download_subtitles(video_url: str, out_dir: str) -> str:
     """
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # First, get metadata without downloading to obtain id and title
+    with yt_dlp.YoutubeDL({'quiet': True}) as ydl_meta:
+        info = ydl_meta.extract_info(video_url, download=False)
+        video_id = info['id']
+        original_title = info.get('title', video_id)
+
+    safe_title = sanitize_filename(original_title)
+
+    # Download subtitles only (english preferred; fall back to auto)
     ydl_opts = {
         'skip_download': True,
         'writesubtitles': True,
@@ -27,18 +36,24 @@ def download_subtitles(video_url: str, out_dir: str) -> str:
         'outtmpl': str(out_dir / '%(id)s.%(ext)s'),
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(video_url, download=True)
-        video_id = info['id']
-    # Rename VTT file to include sanitized title
-    info_path = out_dir / f"{video_id}.info.json"
-    with open(info_path, encoding="utf-8") as f:
-        original_title = json.load(f)["title"]
-    safe_title = sanitize_filename(original_title)
-    vtt_path = out_dir / f"{video_id}.en.vtt"
+        ydl.extract_info(video_url, download=True)
+
+    # Locate the downloaded VTT (handle en and en-* variants)
+    candidate = out_dir / f"{video_id}.en.vtt"
+    if not candidate.exists():
+        # fallback to any en-* variant
+        matches = list(out_dir.glob(f"{video_id}.en*.vtt"))
+        if matches:
+            candidate = matches[0]
+    if not candidate.exists():
+        raise FileNotFoundError(
+            f"No English (or auto) subtitles were found for this video. Tried: {video_id}.en.vtt and en-* variants in {out_dir}"
+        )
+
     final_vtt = out_dir / f"EN_{safe_title}.vtt"
-    vtt_path.rename(final_vtt)
-    if not vtt_path.exists():
-        raise FileNotFoundError(f"Subtitle file not found: {vtt_path}")
+    candidate.rename(final_vtt)
+
+    # Return the new path
     return str(final_vtt)
 
 def translate_subtitles(vtt_path: str, target_lang: str = 'ZH-TW') -> str:
@@ -91,14 +106,15 @@ def translate_subtitles(vtt_path: str, target_lang: str = 'ZH-TW') -> str:
     usage_after = usage_data['character_count']
     limit = usage_data.get('character_limit', None)
     remaining = limit - usage_after if limit is not None else None
-    # Append to report CSV
+    consumed = max(0, usage_after - usage_before)
+    timestamp = datetime.utcnow().isoformat() + 'Z'
     report_file = Path(__file__).parent.parent / 'deepl_usage_report.csv'
     is_new = not report_file.exists()
     with open(report_file, 'a', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         if is_new:
             writer.writerow(['timestamp', 'video_title', 'consumed_chars', 'total_used', 'char_limit', 'remaining'])
-        writer.writerow([datetime.utcnow().isoformat(), safe_title, usage_after - usage_before, usage_after, limit, remaining])
+        writer.writerow([timestamp, safe_title, consumed, usage_after, limit, remaining])
     return str(final_translated)
 
 def get_deepl_usage() -> dict:

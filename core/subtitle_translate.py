@@ -56,7 +56,7 @@ def download_subtitles(video_url: str, out_dir: str) -> str:
     # Return the new path
     return str(final_vtt)
 
-def translate_subtitles(vtt_path: str, target_lang: str = 'ZH-TW') -> str:
+def translate_subtitles(vtt_path: str, target_lang: str = 'ZH-HANT') -> str:
     """
     Translate a VTT subtitle file to the target language using DeepL.
     Returns the filepath of the translated VTT.
@@ -68,18 +68,42 @@ def translate_subtitles(vtt_path: str, target_lang: str = 'ZH-TW') -> str:
     output_lines = []
     buffer = []
 
+    def _translate_chunk_with_fallback(text_chunk: str) -> str:
+        """Try ZH-HANT first; if 400 (Bad Request) then fallback to ZH. Also prints DeepL error body for debugging."""
+        def _call(lang: str):
+            resp = requests.post(
+                "https://api-free.deepl.com/v2/translate",
+                data={
+                    'auth_key': DEEPL_API_KEY,
+                    'text': text_chunk,
+                    'target_lang': lang,
+                    'source_lang': 'EN',  # 明確告知來源語言，降低歧義
+                }
+            )
+            if resp.status_code != 200:
+                # 印出錯誤內容，方便定位 400 的真正原因
+                try:
+                    print("DeepL error:", resp.status_code, resp.json())
+                except Exception:
+                    print("DeepL error:", resp.status_code, resp.text)
+            resp.raise_for_status()
+            return resp.json()['translations'][0]['text']
+
+        try:
+            return _call(target_lang)
+        except requests.HTTPError as e:
+            # 400 多半是 target_lang 不支援，退回 ZH 相容代碼
+            if e.response is not None and e.response.status_code == 400 and target_lang != 'ZH':
+                return _call('ZH')
+            raise
+
     def _flush_buffer():
         if not buffer:
             return
         text_block = '\n'.join(buffer)
         translated_block = []
         for chunk in _split_text(text_block):
-            resp = requests.post(
-                "https://api-free.deepl.com/v2/translate",
-                data={'auth_key': DEEPL_API_KEY, 'text': chunk, 'target_lang': target_lang}
-            )
-            resp.raise_for_status()
-            translated_block.append(resp.json()['translations'][0]['text'])
+            translated_block.append(_translate_chunk_with_fallback(chunk))
         output_lines.extend('\n'.join(translated_block).splitlines())
         buffer.clear()
 
@@ -99,7 +123,7 @@ def translate_subtitles(vtt_path: str, target_lang: str = 'ZH-TW') -> str:
     report_dir = vtt_path.parent
     # Extract video title from existing VTT name if needed
     safe_title = sanitize_filename(report_dir.name)
-    final_translated = report_dir / f"ZH-TW_{safe_title}.vtt"
+    final_translated = report_dir / f"ZH-HANT_{safe_title}.vtt"
     Path(translated_path).rename(final_translated)
     # Record usage after translation
     usage_data = get_deepl_usage()

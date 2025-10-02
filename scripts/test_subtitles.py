@@ -10,7 +10,7 @@ from core.video_downloader import sanitize_filename
 from core.subtitle_translate import download_subtitles, translate_subtitles
 
 if __name__ == "__main__":
-    url = "https://www.youtube.com/watch?v=lqhAOtplWYA"
+    url = "https://www.youtube.com/watch?v=lknNsZgzG1g&t=712s"
     # 自動根據影片標題建立資料夾
     with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
         info = ydl.extract_info(url, download=False)
